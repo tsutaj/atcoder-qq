@@ -70,7 +70,12 @@ const getUserHistory = function(atcoderUserInfo) {
             }
             else {
                 const userHistory = JSON.parse(event.target.responseText);
-                resolve(userHistory);
+                if(userHistory.length === 0) {
+                    reject(new Error("empty response."));
+                }
+                else {
+                    resolve(userHistory);
+                }
             }
         });
         request.addEventListener('error', () => {
@@ -84,18 +89,33 @@ const updateQQTable = function(userHistory, contestMap) {
     const lbRatedRangeIdx = parseInt(document.getElementById("visible-rated-range").value);
     
     let table = document.getElementById("table-main");
-    table.innerHTML = "";
-
     let achieveCount = Array.from(new Array(100), () =>
                                   new Array(numRatedRange)
                                   .fill(0));
+
+    // userHistory は 1 行以上あると仮定して良い
+    let minRank = Infinity;
     userHistory.forEach(userJoining => {
         const contestId = userJoining.ContestScreenName.split('.')[0];
         const contestInfo = contestMap.get(contestId);
         const place = userJoining.Place;
         const ratedIdx = ratedRangeIndex[contestInfo.rate_change];
-        if(place >= 100 || ratedIdx < lbRatedRangeIdx) return;
-        achieveCount[place][ratedIdx]++;
+        if(ratedIdx < lbRatedRangeIdx) return;
+        minRank = Math.min(minRank, place);
+    });
+
+    // 絞った結果 1 件も存在しない場合がある
+    if(minRank == Infinity) return;
+    
+    // minRank の下二桁は捨てる
+    minRank -= minRank % 100;
+    userHistory.forEach(userJoining => {
+        const contestId = userJoining.ContestScreenName.split('.')[0];
+        const contestInfo = contestMap.get(contestId);
+        const place = userJoining.Place;
+        const ratedIdx = ratedRangeIndex[contestInfo.rate_change];
+        if(place >= minRank + 100 || ratedIdx < lbRatedRangeIdx) return;
+        achieveCount[place - minRank][ratedIdx]++;
     });
 
     for(let row=0; row<=10; row++) {
@@ -112,7 +132,11 @@ const updateQQTable = function(userHistory, contestMap) {
                 colElem.setAttribute("style", "font-weight:bold; text-align:center; font-size:1.2em;");
             }
             else if(col == 0) {
-                const textElem = document.createTextNode(String(row - 1) + "0 ~");
+                let text = String(row - 1) + "0 ~";
+                if(minRank != 0) {
+                    text = String(minRank).slice(0, -2) + text;
+                }
+                const textElem = document.createTextNode(text);
                 colElem.appendChild(textElem);
                 colElem.setAttribute("style", "font-weight:bold; text-align:center; font-size:1.2em;");
             }
@@ -125,7 +149,7 @@ const updateQQTable = function(userHistory, contestMap) {
                         html += `<span style="color:${ratedRangeColor[ratedIdx]}">${ratedRangeSymbol}</span> x ${cnt}`;
                     }
                 }
-                if(row == 1 && col == 1) {
+                if(row == 1 && col == 1 && minRank === 0) {
                     html += "---";
                     colElem.setAttribute("style", "text-align:center;");
                 }
@@ -133,32 +157,13 @@ const updateQQTable = function(userHistory, contestMap) {
             }
         }
     }
-};
 
-const updateHeatmapTable = function(userHistory, contestMap) {
-    const lbRatedRangeIdx = parseInt(document.getElementById("visible-rated-range").value);
-    let maxPlace = 0;
-    let achieveCount = new Map();
-    userHistory.forEach(userJoining => {
-        const contestId = userJoining.ContestScreenName.split('.')[0];
-        const contestInfo = contestMap.get(contestId);
-        const place = userJoining.Place;
-        const ratedIdx = ratedRangeIndex[contestInfo.rate_change];
-        if(ratedIdx < lbRatedRangeIdx) return;
-        let counter = achieveCount.get(place);
-        if(achieveCount.get(place) === undefined) {
-            counter = Array(numRatedRange).fill(0);
-        }
-        counter[ratedIdx]++;
-        achieveCount.set(place, counter);
-        maxPlace = Math.max(maxPlace, place);
-    });
+    const titleElem = document.getElementById("page-title");
+    titleElem.innerText = "AtCoder QQ";
 
-    // 値として最も大きい順位は常に 10 の位をインクリメントし 1 の位は 0 にする
-    // 387 -> 390, 400 -> 410
-    maxPlace = maxPlace - maxPlace % 10 + 10;
-    
-    // 5000 個くらいオブジェクト作らなければならないときもあってつらそう
+    const rankLb = Math.max(minRank, 1) + (minRank == 0 ? "st" : "th");
+    const rankUb = (minRank + 99) + "th";
+    titleElem.innerText += ` (${rankLb} 〜 ${rankUb})`
 };
 
 const generateTweetLink = function() {
@@ -205,7 +210,10 @@ window.onload = function() {
                 }
             });
 
-            buttonElem.addEventListener("click", function() {            
+            buttonElem.addEventListener("click", function() {
+                // reset
+                document.getElementById("table-main").innerHTML = "";
+                document.getElementById("page-title").innerText = "AtCoder QQ";
                 const userNameStr = userNameElem.value;
                 const lbRatedRangeIdx = parseInt(document.getElementById("visible-rated-range").value);
                 if(userNameStr.length == 0) return;
