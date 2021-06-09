@@ -17,7 +17,6 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          dry-run: true
           state-name: .atcoder-qq-deploy-cache.json
           local-dir: ./
           server-dir: ./app/atcoder-qq/
