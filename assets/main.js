@@ -8,14 +8,14 @@ const numRatedRange = 5;
 const ratedRangeSymbol = "◉";
 
 const ratedRangeIndex = {
-    undefined : 0,
-    "-"       : 0,
-    " ~ 1199" : 1,
-    " ~ 1999" : 2,
-    " ~ 2799" : 3,
-    "All"     : 4,
-    "1200 ~ " : 4,
-    "2000 ~ " : 4,
+    "-"           : 0,
+    " ~ 1199"     : 1,
+    " ~ 1999"     : 2,
+    " ~ 2799"     : 3,
+    "1200 ~ 2799" : 3,
+    "All"         : 4,
+    "1200 ~ "     : 4,
+    "2000 ~ "     : 4,
 };
 
 const ratedRangeColor = [
