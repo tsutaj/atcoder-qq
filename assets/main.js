@@ -123,6 +123,10 @@ const updateQQTable = function(userHistory, contestMap) {
                         html += `<span style="color:${ratedRangeColor[ratedIdx]}">${ratedRangeSymbol}</span> x ${cnt}`;
                     }
                 }
+                if(row == 1 && col == 1) {
+                    html += "---";
+                    colElem.setAttribute("style", "text-align:center;");
+                }
                 if(html.length > 0) colElem.innerHTML = html;
             }
         }
