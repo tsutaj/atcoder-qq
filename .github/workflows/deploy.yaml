@@ -22,3 +22,4 @@ jobs:
           server-dir: ./app/atcoder-qq/
           exclude: .git*
             - .git*/**
+            - LICENSE

@@ -68,8 +68,10 @@ const getUserHistory = function(atcoderUserInfo) {
             if(event.target.status !== 200) {
                 reject(new Error(`${event.target.status}: ${event.target.statusText}`));
             }
-            const userHistory = JSON.parse(event.target.responseText);
-            resolve(userHistory);
+            else {
+                const userHistory = JSON.parse(event.target.responseText);
+                resolve(userHistory);
+            }
         });
         request.addEventListener('error', () => {
             reject(new Error("Network Error."));
