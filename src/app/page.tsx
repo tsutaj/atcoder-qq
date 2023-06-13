@@ -118,6 +118,9 @@ const getContestInfo = (): Promise<Map<string, string>> => {
 
 const getUserData = (userId: string): Promise<UserHistory[]> => {
   return new Promise((resolve, reject) => {
+    if (userId.length === 0) {
+      reject("userId is empty")
+    }
     fetch(`/users/${userId}`)
       .then((response) => response.json())
       .then((data) => resolve(data))
@@ -186,14 +189,11 @@ const QQTable = (props: {
   lbRatedRangeIndex: number
   contestInfo: Map<string, string>
 }) => {
-  const [userHistoryTable, setUserHistoryTable] =
-    useState<UserHistoryTable | null>(null)
+  const [userHistoryTable, setUserHistoryTable] = useState<UserHistoryTable>()
   useEffect(() => {
-    getUserData(props.userId)
-      .then((data) =>
-        setUserHistoryTable(new UserHistoryTable(data, props.contestInfo))
-      )
-      .catch((_) => setUserHistoryTable(null))
+    getUserData(props.userId).then((data) =>
+      setUserHistoryTable(new UserHistoryTable(data, props.contestInfo))
+    )
   }, [props.contestInfo, props.userId])
 
   console.log("QQTable", userHistoryTable)
@@ -202,8 +202,8 @@ const QQTable = (props: {
   }
 
   const qqData = userHistoryTable?.getQQData(props.lbRatedRangeIndex)
-  if (userHistoryTable === null) {
-    return <div className="font-sans">データの取得に失敗しています</div>
+  if (userHistoryTable === undefined) {
+    return <div className="font-sans">Loading...</div>
   } else if (!qqData) {
     return (
       <div className="font-sans">
@@ -254,19 +254,15 @@ const QQTable = (props: {
 const AtCoderQQ = () => {
   let [userId, setUserId] = useState("")
   let [lbRatedRangeIndex, setLbRatedRangeIndex] = useState(0)
-  let [contestInfo, setContestInfo] = useState<Map<string, string> | null>(
-    new Map()
-  )
+  let [contestInfo, setContestInfo] = useState<Map<string, string>>(new Map())
   useMemo(() => {
     getContestInfo()
       .then((data) => setContestInfo(data))
-      .catch((_) => setContestInfo(null))
+      .catch((_) => new Map())
   }, [])
 
   console.log("AtCoderQQ", contestInfo)
-  if (contestInfo === null) {
-    return <div>コンテスト情報が読み込めません</div>
-  } else if (contestInfo.size === 0) {
+  if (contestInfo.size === 0) {
     return <div>Loading...</div>
   } else {
     return (
