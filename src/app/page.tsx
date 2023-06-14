@@ -145,20 +145,27 @@ const AtCoderUserForm = (props: {
 
   return (
     <form method="get" onSubmit={handleSubmit}>
-      <input
-        className="border-slate-200 placeholder-slate-400 contrast-more:border-slate-400 contrast-more:placeholder-slate-500"
-        placeholder="AtCoder ID"
-        name="atcoder-id"
-        type="text"
-      />
-      <select name="lb-rated-range-index" defaultValue="2">
-        <option value="0">UnRated を含むすべてのコンテスト</option>
-        <option value="1">Rated 上限が 1199 以上のコンテスト</option>
-        <option value="2">Rated 上限が 1999 以上のコンテスト</option>
-        <option value="3">Rated 上限が 2799 以上のコンテスト</option>
-        <option value="4">Rated 上限がないコンテストのみ</option>
-      </select>
-      <button type="submit">Submit</button>
+      <div className="mx-auto max-w-2xl sm:flex sm:space-x-3 p-3 bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
+        <div className="pb-2 sm:pb-0 sm:flex-[2_0_0%]">
+          <label htmlFor="atcoder-id" className="block text-sm font-medium dark:text-white"><span className="sr-only">AtCoder ID</span></label>
+          <input type="text" id="atcoder-id" className="py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400" placeholder="AtCoder ID" name="atcoder-id"/>
+        </div>
+        <div className="pt-2 sm:pt-0 sm:pl-3 border-t border-gray-200 sm:border-t-0 sm:border-l sm:flex-[3_0_0%] dark:border-gray-700">
+          <label htmlFor="lb-rated-range-index" className="block text-sm font-medium dark:text-white"><span className="sr-only">Rated Range Index</span></label>
+          <select name="lb-rated-range-index" id="lb-rated-range-index" defaultValue="2" className="bg-white py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400">
+            <option value="0">UnRated を含むすべてのコンテスト</option>
+            <option value="1">Rated 上限が 1199 以上のコンテスト</option>
+            <option value="2">Rated 上限が 1999 以上のコンテスト</option>
+            <option value="3">Rated 上限が 2799 以上のコンテスト</option>
+            <option value="4">Rated 上限がないコンテストのみ</option>
+          </select>
+        </div>
+        <div className="pt-2 sm:pt-0 grid sm:block sm:flex-[0_0_auto]">
+          <button type="submit" className="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm sm:p-4 dark:focus:ring-offset-gray-800">
+            Create QQ
+          </button>
+        </div>
+      </div>
     </form>
   )
 }
@@ -203,10 +210,10 @@ const QQTable = (props: {
 
   const qqData = userHistoryTable?.getQQData(props.lbRatedRangeIndex)
   if (userHistoryTable === undefined) {
-    return <div className="font-sans">Loading...</div>
+    return <div>Loading...</div>
   } else if (!qqData) {
     return (
-      <div className="font-sans">
+      <div>
         {props.userId}{" "}
         というユーザーが存在しないか、指定された範囲のコンテストに参加したことがありません
       </div>
@@ -215,12 +222,12 @@ const QQTable = (props: {
     const minRank = userHistoryTable.getRoundedMinRank(props.lbRatedRangeIndex)
     const range = [...Array(10).keys()] // [0, 1, ..., 9]
     return (
-      <table>
+      <table className="min-w-full bg-white border text-center text-sm font-light rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
         <thead>
           <tr>
-            <td></td>
+            <td className="border dark:border-neutral-500"></td>
             {range.map((val) => (
-              <td key={`head-cell-${val}`}>{val}</td>
+              <td key={`head-cell-${val}`} className="border dark:border-neutral-500 font-bold">{val}</td>
             ))}
           </tr>
         </thead>
@@ -229,14 +236,14 @@ const QQTable = (props: {
             let lb = minRank + rowval * 10
             return (
               <tr key={`body-row-${rowval}`}>
-                <td key={`row-${rowval}`}>{lb}〜</td>
+                <td key={`row-${rowval}`} className="border dark:border-neutral-500 font-bold">{lb}〜</td>
                 {range.map((colval) => {
                   const rank = minRank + rowval * 10 + colval
                   if (rank === 0) {
-                    return <td key="rank-none">-</td>
+                    return <td key="rank-none" className="border dark:border-neutral-500">-</td>
                   } else {
                     return (
-                      <td key={`rank-${rank}`}>
+                      <td key={`rank-${rank}`} className="border dark:border-neutral-500">
                         <QQTableCell qqData={qqData[rowval * 10 + colval]} />
                       </td>
                     )
@@ -282,10 +289,30 @@ const AtCoderQQ = () => {
 }
 
 export default function Home() {
+  useEffect(() => {
+    // @ts-ignore
+    import('preline');
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col justify-start p-24">
-      <h1 className="text-3xl">AtCoder QQ</h1>
-      <AtCoderQQ />
+    <main className="flex min-h-screen flex-col justify-start font-sans">
+      <div className="overflow-hidden">
+        <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="relative mx-auto max-w-4xl grid space-y-5 sm:space-y-10">
+            {/* Title */}
+            <div className="text-center">
+              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-gray-200">
+                Create QQ Table from your great contest results
+              </p>
+              <h1 className="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight dark:text-gray-200">
+                AtCoder QQ
+              </h1>
+            </div>
+            {/* End Title */}
+            <AtCoderQQ />
+          </div>
+        </div>
+      </div>
     </main>
   )
 }
