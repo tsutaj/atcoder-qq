@@ -213,47 +213,48 @@ const QQTable = (props: {
     return <div>Loading...</div>
   } else if (!qqData) {
     return (
-      <div>
-        {props.userId}{" "}
-        というユーザーが存在しないか、指定された範囲のコンテストに参加したことがありません
+      <div className="bg-orange-100 text-orange-700 p-4 rounded-lg" role="alert">
+        <p>{props.userId}{" "} というユーザーが存在しないか、指定された範囲のコンテストに参加したことがありません</p>
       </div>
     )
   } else {
     const minRank = userHistoryTable.getRoundedMinRank(props.lbRatedRangeIndex)
     const range = [...Array(10).keys()] // [0, 1, ..., 9]
     return (
-      <table className="min-w-full bg-white border text-center text-sm font-light rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
-        <thead>
-          <tr>
-            <td className="border dark:border-neutral-500"></td>
-            {range.map((val) => (
-              <td key={`head-cell-${val}`} className="border dark:border-neutral-500 font-bold">{val}</td>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {range.map((rowval) => {
-            let lb = minRank + rowval * 10
-            return (
-              <tr key={`body-row-${rowval}`}>
-                <td key={`row-${rowval}`} className="border dark:border-neutral-500 font-bold">{lb}〜</td>
-                {range.map((colval) => {
-                  const rank = minRank + rowval * 10 + colval
-                  if (rank === 0) {
-                    return <td key="rank-none" className="border dark:border-neutral-500">-</td>
-                  } else {
-                    return (
-                      <td key={`rank-${rank}`} className="border dark:border-neutral-500">
-                        <QQTableCell qqData={qqData[rowval * 10 + colval]} />
-                      </td>
-                    )
-                  }
-                })}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full bg-white border text-center text-sm font-light rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
+          <thead>
+            <tr>
+              <th className="border p-1 dark:border-neutral-500 whitespace-nowrap"></th>
+              {range.map((val) => (
+                <th key={`head-cell-${val}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{val}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {range.map((rowval) => {
+              let lb = minRank + rowval * 10
+              return (
+                <tr key={`body-row-${rowval}`}>
+                  <td key={`row-${rowval}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{lb}〜</td>
+                  {range.map((colval) => {
+                    const rank = minRank + rowval * 10 + colval
+                    if (rank === 0) {
+                      return <td key="rank-none" className="border p-1 dark:border-neutral-500 whitespace-nowrap">-</td>
+                    } else {
+                      return (
+                        <td key={`rank-${rank}`} className="border p-1 dark:border-neutral-500 whitespace-nowrap">
+                          <QQTableCell qqData={qqData[rowval * 10 + colval]} />
+                        </td>
+                      )
+                    }
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     )
   }
 }
