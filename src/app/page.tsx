@@ -69,7 +69,6 @@ const getRankingText = (num: number) => {
     case '13':
       return `${numStr}th`;
     default:
-      console.log(numStr, numStr.slice(-1))
       switch (numStr.slice(-1)) {
         case '1':
           return `${numStr}st`;
