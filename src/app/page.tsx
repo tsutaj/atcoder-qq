@@ -31,9 +31,63 @@ const ratedRangeStr = [
   "AGC",
 ]
 
+const TwitterButton = (props: {
+  text?: string,
+  url?: string,
+  hashtags?: string[],
+}) => {
+  const _url = new URL("https://twitter.com/intent/tweet");
+  if (props.text !== undefined) _url.searchParams.set("text", props.text);
+  if (props.url !== undefined) _url.searchParams.set("url", props.url);
+  if (props.hashtags !== undefined) _url.searchParams.set("hashtags", props.hashtags.join(","));
+  return (
+    <a href={_url.toString()}
+       target="_blank"
+       rel="noopener noreferrer"
+       className="text-white bg-[#1da1f2] hover:bg-[#1da1f2]/90 focus:ring-4 focus:outline-none focus:ring-[#1da1f2]/50 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center dark:focus:ring-[#1da1f2]/55 mr-2 mb-2 w-fit">
+      <svg className="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+           viewBox="0 0 20 17">
+        <path fill-rule="evenodd"
+              d="M20 1.892a8.178 8.178 0 0 1-2.355.635 4.074 4.074 0 0 0 1.8-2.235 8.344 8.344 0 0 1-2.605.98A4.13 4.13 0 0 0 13.85 0a4.068 4.068 0 0 0-4.1 4.038 4 4 0 0 0 .105.919A11.705 11.705 0 0 1 1.4.734a4.006 4.006 0 0 0 1.268 5.392 4.165 4.165 0 0 1-1.859-.5v.05A4.057 4.057 0 0 0 4.1 9.635a4.19 4.19 0 0 1-1.856.07 4.108 4.108 0 0 0 3.831 2.807A8.36 8.36 0 0 1 0 14.184 11.732 11.732 0 0 0 6.291 16 11.502 11.502 0 0 0 17.964 4.5c0-.177 0-.35-.012-.523A8.143 8.143 0 0 0 20 1.892Z"
+              clip-rule="evenodd"/>
+      </svg>
+      Tweet
+    </a>
+  )
+}
+
+const getContestURL = (id: string) => {
+  return `https://atcoder.jp/contests/${id}`
+}
+
+const getRankingText = (num: number) => {
+  const numStr = String(num);
+
+  switch (numStr.slice(-2)) {
+    case '11':
+    case '12':
+    case '13':
+      return `${numStr}th`;
+    default:
+      console.log(numStr, numStr.slice(-1))
+      switch (numStr.slice(-1)) {
+        case '1':
+          return `${numStr}st`;
+        case '2':
+          return `${numStr}nd`;
+        case '3':
+          return `${numStr}rd`;
+        default:
+          return `${numStr}th`;
+      }
+  }
+}
+
 interface Contest {
   id: string
   rate_change: string
+  title: string
+  start_epoch_second: number
 }
 
 interface UserHistory {
@@ -43,9 +97,9 @@ interface UserHistory {
 
 class UserHistoryTable {
   minRank: number[]
-  achieveCount: Map<number, string[][]>
+  achieveCount: Map<number, Contest[][]>
 
-  constructor(userData: UserHistory[], contestInfo: Map<string, string>) {
+  constructor(userData: UserHistory[], idToContest: Map<string, Contest>) {
     const numRatedRange = ratedRangeColor.length
 
     this.minRank = Array(numRatedRange).fill(Infinity)
@@ -53,7 +107,8 @@ class UserHistoryTable {
 
     userData.forEach((userJoining) => {
       const contestId = userJoining.ContestScreenName.split(".")[0]
-      const rateChange = contestInfo.get(contestId)
+      const contest = idToContest.get(contestId)
+      const rateChange = idToContest.get(contestId)?.rate_change
       const place = userJoining.Place
       if (rateChange) {
         const ratedIdx = ratedRangeIndex[rateChange]
@@ -61,10 +116,10 @@ class UserHistoryTable {
         if (!this.achieveCount.has(place)) {
           this.achieveCount.set(
             place,
-            Array.from(new Array(numRatedRange), () => new Array())
+            Array.from(new Array(numRatedRange), () => [])
           )
         }
-        this.achieveCount.get(place)![ratedIdx].push(contestId)
+        this.achieveCount.get(place)![ratedIdx].push(contest!)
       }
     })
   }
@@ -101,15 +156,27 @@ class UserHistoryTable {
     }
     return qqData
   }
+
+  public getDetails = (lbRatedRangeIndex: number, rank: number): Contest[] => {
+    const numRatedRange = ratedRangeColor.length
+
+    if (!this.achieveCount.has(rank)) return []
+    let details = []
+    for (let i = lbRatedRangeIndex; i < numRatedRange; i++) {
+      details.push(...this.achieveCount.get(rank)![i])
+    }
+    details.sort((a: Contest, b: Contest) => a.start_epoch_second - b.start_epoch_second)
+    return details
+  }
 }
 
-const getContestInfo = (): Promise<Map<string, string>> => {
+const getContestInfo = (): Promise<Map<string, Contest>> => {
   return new Promise((resolve, reject) => {
     fetch("/contests")
       .then((response) => response.json())
       .then((data) => {
         let contestMap = new Map()
-        data.forEach((e: Contest) => contestMap.set(e.id, e.rate_change))
+        data.forEach((e: Contest) => contestMap.set(e.id, e))
         resolve(contestMap)
       })
       .catch((error) => reject(error))
@@ -137,10 +204,11 @@ const AtCoderUserForm = (props: {
 
     const form = e.currentTarget
     const formData = new FormData(form)
-    props.setUserId(formData.get("atcoder-id")! as string)
-    props.setLbRatedRangeIndex(
-      parseInt(formData.get("lb-rated-range-index")! as string)
-    )
+    const userId = formData.get("atcoder-id")! as string
+    const lbRatedRangeIndex = parseInt(formData.get("lb-rated-range-index")! as string)
+    props.setUserId(userId)
+    props.setLbRatedRangeIndex(lbRatedRangeIndex)
+    history.pushState("", "", `?user=${userId}&rated-range=${lbRatedRangeIndex}`);
   }
 
   return (
@@ -191,19 +259,74 @@ const QQTableCell = (props: { qqData: number[] }) => {
   )
 }
 
+const Details = (props: {
+  rank: number | undefined
+  contests: Contest[] | undefined
+}) => {
+  if (props.contests === undefined || props.contests.length === 0) return <></>
+  return (
+    <div className="space-y-2 sm:space-y-4">
+      <h2 className="text-xl text-gray-800 font-bold sm:text-3xl lg:text-4xl lg:leading-tight dark:text-gray-200">
+        {getRankingText(props.rank!)}
+      </h2>
+      <div className="overflow-x-auto border rounded-lg overflow-hidden dark:border-gray-700">
+        <table className="table-auto w-full bg-white border text-left text-sm font-light dark:bg-slate-900 dark:border-gray-700">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <tr>
+            <th scope="col" className="px-6 py-3">
+              Date
+            </th>
+            <th scope="col" className="px-6 py-3">
+              Contest Name
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+            {props.contests.map((contest, index) => {
+              let dateTime = new Date(contest.start_epoch_second * 1000)
+              let dateString = dateTime.toLocaleDateString(
+                "ja-JP", {year: "numeric",month: "2-digit", day: "2-digit"}
+              )
+              return (
+                <tr key={`detail=${index}`} className="bg-white hover:bg-slate-100 hover:dark:bg-slate-800 border-b dark:bg-gray-900 dark:border-gray-700">
+                  <td className="px-6 py-4">
+                    {dateString}
+                  </td>
+                  <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    <span style={{ color: `${ratedRangeColor[ratedRangeIndex[contest.rate_change]]}` }}>
+                      {ratedRangeSymbol}
+                    </span>
+                    <a href={getContestURL(contest.id)}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                    >{contest.title}</a>
+                  </th>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 const QQTable = (props: {
   userId: string
   lbRatedRangeIndex: number
-  contestInfo: Map<string, string>
+  contestInfo: Map<string, Contest>
 }) => {
   const [userHistoryTable, setUserHistoryTable] = useState<UserHistoryTable>()
+  const [details, setDetails] = useState<Contest[]>([])
+  const [rank, setRank] = useState<number>()
   useEffect(() => {
     getUserData(props.userId).then((data) =>
       setUserHistoryTable(new UserHistoryTable(data, props.contestInfo))
     )
+    setDetails([])
   }, [props.contestInfo, props.userId])
 
-  console.log("QQTable", userHistoryTable)
   if (props.userId.length === 0) {
     return <></>
   }
@@ -220,56 +343,70 @@ const QQTable = (props: {
   } else {
     const minRank = userHistoryTable.getRoundedMinRank(props.lbRatedRangeIndex)
     const range = [...Array(10).keys()] // [0, 1, ..., 9]
-    return (
-      <div className="overflow-x-auto">
-        <table className="table-auto w-full bg-white border text-center text-sm font-light rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
-          <thead>
-            <tr>
-              <th className="border p-1 dark:border-neutral-500 whitespace-nowrap"></th>
-              {range.map((val) => (
-                <th key={`head-cell-${val}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{val}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {range.map((rowval) => {
-              let lb = minRank + rowval * 10
-              return (
-                <tr key={`body-row-${rowval}`}>
-                  <td key={`row-${rowval}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{lb}〜</td>
-                  {range.map((colval) => {
-                    const rank = minRank + rowval * 10 + colval
-                    if (rank === 0) {
-                      return <td key="rank-none" className="border p-1 dark:border-neutral-500 whitespace-nowrap">-</td>
-                    } else {
-                      return (
-                        <td key={`rank-${rank}`} className="border p-1 dark:border-neutral-500 whitespace-nowrap">
-                          <QQTableCell qqData={qqData[rowval * 10 + colval]} />
-                        </td>
-                      )
-                    }
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+    return <>
+      <div className="space-y-1">
+        <div className="overflow-x-auto border rounded-lg overflow-hidden dark:border-gray-700">
+          <table className="table-auto w-full bg-white border text-center text-sm font-light dark:bg-slate-900 dark:border-gray-700">
+            <thead>
+              <tr>
+                <th className="border p-1 dark:border-neutral-500 whitespace-nowrap"></th>
+                {range.map((val) => (
+                  <th key={`head-cell-${val}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{val}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {range.map((rowval) => {
+                let lb = minRank + rowval * 10
+                return (
+                  <tr key={`body-row-${rowval}`}>
+                    <td key={`row-${rowval}`} className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap">{lb}〜</td>
+                    {range.map((colval) => {
+                      const rank = minRank + rowval * 10 + colval
+                      if (rank === 0) {
+                        return <td key="rank-none" className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap">-</td>
+                      } else {
+                        let rankDetails = userHistoryTable.getDetails(props.lbRatedRangeIndex, rank)
+                        return (
+                          <td key={`rank-${rank}`} onClick={() => {setDetails(rankDetails); setRank(rank)}} className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap">
+                            <QQTableCell qqData={qqData[rowval * 10 + colval]}/>
+                          </td>
+                        )
+                      }
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <TwitterButton
+          text={`${props.userId}'s AtCoder QQ (${ratedRangeStr[props.lbRatedRangeIndex]})`}
+          url={location.href}
+          hashtags={["AtCoderQQ"]} />
       </div>
-    )
+      <Details rank={rank} contests={details} />
+    </>
   }
 }
 
 const AtCoderQQ = () => {
   let [userId, setUserId] = useState("")
   let [lbRatedRangeIndex, setLbRatedRangeIndex] = useState(0)
-  let [contestInfo, setContestInfo] = useState<Map<string, string>>(new Map())
+  let [contestInfo, setContestInfo] = useState<Map<string, Contest>>(new Map())
   useMemo(() => {
     getContestInfo()
       .then((data) => setContestInfo(data))
       .catch((_) => new Map())
   }, [])
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search)
+    if (queryParams.has("user") && queryParams.has("rated-range")) {
+      setUserId(queryParams.get("user")!)
+      setLbRatedRangeIndex(parseInt(queryParams.get("rated-range")!))
+    }
+  }, [])
 
-  console.log("AtCoderQQ", contestInfo)
   if (contestInfo.size === 0) {
     return <div>Loading...</div>
   } else {
