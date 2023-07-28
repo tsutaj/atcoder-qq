@@ -82,6 +82,13 @@ const getRankingText = (num: number) => {
   }
 }
 
+const getQueryParams = () => {
+  const queryParams = new URLSearchParams(window.location.search)
+  const userId = queryParams.get("user")
+  const ratedRange = queryParams.get("rated-range")
+  return {userId: userId, ratedRange: ratedRange}
+}
+
 interface Contest {
   id: string
   rate_change: string
@@ -210,16 +217,17 @@ const AtCoderUserForm = (props: {
     history.pushState("", "", `?user=${userId}&rated-range=${lbRatedRangeIndex}`);
   }
 
+  const params = getQueryParams();
   return (
     <form method="get" onSubmit={handleSubmit}>
       <div className="mx-auto max-w-2xl sm:flex sm:space-x-3 p-3 bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-slate-900 dark:border-gray-700 dark:shadow-gray-900/[.2]">
         <div className="pb-2 sm:pb-0 sm:flex-[2_0_0%]">
           <label htmlFor="atcoder-id" className="block text-sm font-medium dark:text-white"><span className="sr-only">AtCoder ID</span></label>
-          <input type="text" id="atcoder-id" className="py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400" placeholder="AtCoder ID" name="atcoder-id"/>
+          <input type="text" id="atcoder-id" defaultValue={params.userId ?? ""} className="py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400" placeholder="AtCoder ID" name="atcoder-id"/>
         </div>
         <div className="pt-2 sm:pt-0 sm:pl-3 border-t border-gray-200 sm:border-t-0 sm:border-l sm:flex-[3_0_0%] dark:border-gray-700">
           <label htmlFor="lb-rated-range-index" className="block text-sm font-medium dark:text-white"><span className="sr-only">Rated Range Index</span></label>
-          <select name="lb-rated-range-index" id="lb-rated-range-index" defaultValue="2" className="bg-white py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400">
+          <select name="lb-rated-range-index" defaultValue={parseInt(params.ratedRange ?? "2")} id="lb-rated-range-index" className="bg-white py-3 px-4 block w-full border-transparent rounded-md text-sm focus:border-blue-500 focus:ring-blue-500 sm:p-4 dark:bg-slate-900 dark:border-transparent dark:text-gray-400">
             <option value="0">UnRated を含むすべてのコンテスト</option>
             <option value="1">Rated 上限が 1199 以上のコンテスト</option>
             <option value="2">Rated 上限が 1999 以上のコンテスト</option>
@@ -399,10 +407,10 @@ const AtCoderQQ = () => {
       .catch((_) => new Map())
   }, [])
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search)
-    if (queryParams.has("user") && queryParams.has("rated-range")) {
-      setUserId(queryParams.get("user")!)
-      setLbRatedRangeIndex(parseInt(queryParams.get("rated-range")!))
+    const params = getQueryParams()
+    if (params.userId && params.ratedRange) {
+      setUserId(params.userId)
+      setLbRatedRangeIndex(parseInt(params.ratedRange))
     }
   }, [])
 
