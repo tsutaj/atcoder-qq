@@ -547,9 +547,20 @@ export default function Home() {
               <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-gray-200">
                 Create QQ Table from your great contest results
               </p>
-              <h1 className="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight dark:text-gray-200">
+              <h1 className="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight mb-3 dark:text-gray-200">
                 AtCoder QQ
               </h1>
+              <p className="text-xl text-gray-800 dark:text-gray-200">
+                developed by{" "}
+                <a
+                  href="https://twitter.com/tsutaj"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 dark:text-blue-400"
+                >
+                  @tsutaj
+                </a>
+              </p>
             </div>
             {/* End Title */}
             <AtCoderQQ />
