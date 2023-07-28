@@ -56,9 +56,9 @@ const TwitterButton = (props: {
         viewBox="0 0 20 17"
       >
         <path
-          fill-rule="evenodd"
+          fillRule="evenodd"
           d="M20 1.892a8.178 8.178 0 0 1-2.355.635 4.074 4.074 0 0 0 1.8-2.235 8.344 8.344 0 0 1-2.605.98A4.13 4.13 0 0 0 13.85 0a4.068 4.068 0 0 0-4.1 4.038 4 4 0 0 0 .105.919A11.705 11.705 0 0 1 1.4.734a4.006 4.006 0 0 0 1.268 5.392 4.165 4.165 0 0 1-1.859-.5v.05A4.057 4.057 0 0 0 4.1 9.635a4.19 4.19 0 0 1-1.856.07 4.108 4.108 0 0 0 3.831 2.807A8.36 8.36 0 0 1 0 14.184 11.732 11.732 0 0 0 6.291 16 11.502 11.502 0 0 0 17.964 4.5c0-.177 0-.35-.012-.523A8.143 8.143 0 0 0 20 1.892Z"
-          clip-rule="evenodd"
+          clipRule="evenodd"
         />
       </svg>
       Tweet
@@ -319,7 +319,7 @@ const Details = (props: {
       <h2 className="text-xl text-gray-800 font-bold sm:text-3xl lg:text-4xl lg:leading-tight dark:text-gray-200">
         {getRankingText(props.rank!)}
       </h2>
-      <div className="overflow-x-auto border rounded-lg overflow-hidden dark:border-gray-700">
+      <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
         <table className="table-auto w-full bg-white border text-left text-sm font-light dark:bg-slate-900 dark:border-gray-700">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
@@ -416,80 +416,82 @@ const QQTable = (props: {
     const range = [...Array(10).keys()] // [0, 1, ..., 9]
     return (
       <>
-        <div className="space-y-1">
-          <div className="overflow-x-auto border rounded-lg overflow-hidden dark:border-gray-700">
-            <table className="table-auto w-full bg-white border text-center text-sm font-light dark:bg-slate-900 dark:border-gray-700">
-              <thead>
-                <tr>
-                  <th className="border p-1 dark:border-neutral-500 whitespace-nowrap"></th>
-                  {range.map((val) => (
-                    <th
-                      key={`head-cell-${val}`}
-                      className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap"
-                    >
-                      {val}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {range.map((rowval) => {
-                  let lb = minRank + rowval * 10
-                  return (
-                    <tr key={`body-row-${rowval}`}>
-                      <td
-                        key={`row-${rowval}`}
+        <div className="overflow-x-auto space-y-5 sm:space-y-10">
+          <div className="space-y-1">
+            <div className="border rounded-lg dark:border-gray-700">
+              <table className="table-auto w-full bg-white border text-center text-sm font-light dark:bg-slate-900 dark:border-gray-700">
+                <thead>
+                  <tr>
+                    <th className="border p-1 dark:border-neutral-500 whitespace-nowrap"></th>
+                    {range.map((val) => (
+                      <th
+                        key={`head-cell-${val}`}
                         className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap"
                       >
-                        {lb}〜
-                      </td>
-                      {range.map((colval) => {
-                        const rank = minRank + rowval * 10 + colval
-                        if (rank === 0) {
-                          return (
-                            <td
-                              key="rank-none"
-                              className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap"
-                            >
-                              -
-                            </td>
-                          )
-                        } else {
-                          let rankDetails = userHistoryTable.getDetails(
-                            props.lbRatedRangeIndex,
-                            rank
-                          )
-                          return (
-                            <td
-                              key={`rank-${rank}`}
-                              onClick={() => {
-                                setDetails(rankDetails)
-                                setRank(rank)
-                              }}
-                              className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap"
-                            >
-                              <QQTableCell
-                                qqData={qqData[rowval * 10 + colval]}
-                              />
-                            </td>
-                          )
-                        }
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        {val}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {range.map((rowval) => {
+                    let lb = minRank + rowval * 10
+                    return (
+                      <tr key={`body-row-${rowval}`}>
+                        <td
+                          key={`row-${rowval}`}
+                          className="border p-1 dark:border-neutral-500 font-bold whitespace-nowrap"
+                        >
+                          {lb}〜
+                        </td>
+                        {range.map((colval) => {
+                          const rank = minRank + rowval * 10 + colval
+                          if (rank === 0) {
+                            return (
+                              <td
+                                key="rank-none"
+                                className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap"
+                              >
+                                -
+                              </td>
+                            )
+                          } else {
+                            let rankDetails = userHistoryTable.getDetails(
+                              props.lbRatedRangeIndex,
+                              rank
+                            )
+                            return (
+                              <td
+                                key={`rank-${rank}`}
+                                onClick={() => {
+                                  setDetails(rankDetails)
+                                  setRank(rank)
+                                }}
+                                className="border p-1 hover:cursor-pointer hover:bg-slate-300 hover:dark:bg-slate-600 dark:border-neutral-500 whitespace-nowrap"
+                              >
+                                <QQTableCell
+                                  qqData={qqData[rowval * 10 + colval]}
+                                />
+                              </td>
+                            )
+                          }
+                        })}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <TwitterButton
+              text={`${props.userId}'s AtCoder QQ (${
+                ratedRangeStr[props.lbRatedRangeIndex]
+              })`}
+              url={location.href}
+              hashtags={["AtCoderQQ"]}
+            />
           </div>
-          <TwitterButton
-            text={`${props.userId}'s AtCoder QQ (${
-              ratedRangeStr[props.lbRatedRangeIndex]
-            })`}
-            url={location.href}
-            hashtags={["AtCoderQQ"]}
-          />
+          <Details rank={rank} contests={details} />
         </div>
-        <Details rank={rank} contests={details} />
       </>
     )
   }
@@ -539,32 +541,30 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col justify-start font-sans">
-      <div className="overflow-hidden">
-        <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="relative mx-auto max-w-4xl grid space-y-5 sm:space-y-10">
-            {/* Title */}
-            <div className="text-center">
-              <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-gray-200">
-                Create QQ Table from your great contest results
-              </p>
-              <h1 className="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight mb-3 dark:text-gray-200">
-                AtCoder QQ
-              </h1>
-              <p className="text-xl text-gray-800 dark:text-gray-200">
-                developed by{" "}
-                <a
-                  href="https://twitter.com/tsutaj"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 dark:text-blue-400"
-                >
-                  @tsutaj
-                </a>
-              </p>
-            </div>
-            {/* End Title */}
-            <AtCoderQQ />
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="relative mx-auto max-w-4xl grid space-y-5 sm:space-y-10">
+          {/* Title */}
+          <div className="text-center">
+            <p className="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-gray-200">
+              Create QQ Table from your great contest results
+            </p>
+            <h1 className="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight mb-3 dark:text-gray-200">
+              AtCoder QQ
+            </h1>
+            <p className="text-xl text-gray-800 dark:text-gray-200">
+              developed by{" "}
+              <a
+                href="https://twitter.com/tsutaj"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 dark:text-blue-400"
+              >
+                @tsutaj
+              </a>
+            </p>
           </div>
+          {/* End Title */}
+          <AtCoderQQ />
         </div>
       </div>
     </main>
